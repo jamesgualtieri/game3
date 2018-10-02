@@ -4,6 +4,8 @@
 
 #include "MeshBuffer.hpp"
 #include "GL.hpp"
+#include "Sound.hpp"
+
 
 #include <SDL.h>
 #include <glm/glm.hpp>
@@ -38,4 +40,7 @@ struct GameMode : public Mode {
 	float limit = 1.0f;
 	float life = 10.0f;
 	float score = 0.0f;
+	bool lose = false;
+
+	std::shared_ptr< Sound::PlayingSample > loop;
 };

@@ -35,6 +35,10 @@ Load< GLuint > meshes_for_depth_program(LoadTagDefault, [](){
 	return new GLuint(meshes->make_vao_for_program(depth_program->program));
 });
 
+Load< Sound::Sample > sample_loop(LoadTagDefault, [](){
+	return new Sound::Sample(data_path("loop.wav"));
+});
+
 //used for fullscreen passes:
 Load< GLuint > empty_vao(LoadTagDefault, [](){
 	GLuint vao = 0;
@@ -242,9 +246,11 @@ Load< Scene > scene(LoadTagDefault, [](){
 
 GameMode::GameMode() {
 	srand(time(NULL));
+	loop = sample_loop->play(glm::vec3(0.0f,0.0f,0.0f), 1.0f, Sound::Loop);
 }
 
 GameMode::~GameMode() {
+	if (loop) loop->stop();
 }
 
 bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
@@ -274,10 +280,6 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			plate_dir = -1.0f;
 			return true;
 		}
-		if (evt.key.keysym.scancode == SDL_SCANCODE_S) {
-			plate_dir = 0.0f;
-			return true;
-		}
 	}
 
 	return false;
@@ -289,6 +291,7 @@ float percentCovered() {
 
 void GameMode::update(float elapsed) {
 	if (life <= 0.0f) {
+		lose = true;
 		return;
 	} else {
 		score += elapsed;
@@ -527,6 +530,12 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	height = 0.1f;
 	draw_text(you, glm::vec2(0.975f, y_pos-0.025f), height, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
+
+	if (lose) {
+		std::string loser = "GAME OVER";
+		height = 0.2f;
+		draw_text(loser, glm::vec2(-1.1f, 0.0f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	}
 
 	GL_ERRORS();
 
