@@ -1,2 +1,3 @@
 wood.png is a crop of https://www.pexels.com/photo/brown-close-up-hd-wallpaper-surface-172289/ (free for commercial use, no attribution required)
 marble.png is an edited crop of https://www.pexels.com/photo/abstract-backdrop-background-floor-921776/ (free for commercial use, no attribution required)
+fire.png is an edited version of https://opengameart.org/node/48263 (free for commercial use, no attribution required)

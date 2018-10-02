@@ -314,6 +314,7 @@ void GameMode::update(float elapsed) {
 	if (life >= 0.0f) {
 		score += elapsed;
 	}
+
 }
 
 //GameMode will render to some offscreen framebuffer(s).
@@ -441,10 +442,10 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	glUseProgram(texture_program->program);
 
 	//don't use distant directional light at all (color == 0):
-	glUniform3fv(texture_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
+	glUniform3fv(texture_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(0.5f, 0.5f, 0.3f)));
 	glUniform3fv(texture_program->sun_direction_vec3, 1, glm::value_ptr(glm::normalize(glm::vec3(0.0f, 0.0f,-1.0f))));
 	//use hemisphere light for subtle ambient light:
-	glUniform3fv(texture_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, 0.7f)));
+	glUniform3fv(texture_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.4f, 0.2f, 0.4f)));
 	glUniform3fv(texture_program->sky_direction_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)));
 
 	glm::mat4 world_to_spot =
@@ -475,7 +476,9 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	//The shadow_depth_tex must have these parameters set to be used as a sampler2DShadow in the shader:
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LESS);
+
 	//NOTE: however, these are parameters of the texture object, not the binding point, so there is no need to set them *each frame*. I'm doing it here so that you are likely to see that they are being set.
+	
 	glActiveTexture(GL_TEXTURE0);
 
 	scene->draw(camera);

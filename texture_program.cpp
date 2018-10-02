@@ -39,6 +39,7 @@ TextureProgram::TextureProgram() {
 		"uniform vec2 spot_outer_inner;\n"
 		"uniform sampler2D tex;\n"
 		"uniform sampler2DShadow spot_depth_tex;\n"
+		"uniform float test;\n"
 		"in vec3 position;\n"
 		"in vec3 normal;\n"
 		"in vec4 color;\n"
@@ -86,6 +87,7 @@ TextureProgram::TextureProgram() {
 	spot_direction_vec3 = glGetUniformLocation(program, "spot_direction");
 	spot_color_vec3 = glGetUniformLocation(program, "spot_color");
 	spot_outer_inner_vec2 = glGetUniformLocation(program, "spot_outer_inner");
+	test_f = glGetUniformLocation(program, "test");
 
 	light_to_spot_mat4 = glGetUniformLocation(program, "light_to_spot");
 
@@ -96,6 +98,7 @@ TextureProgram::TextureProgram() {
 
 	GLuint spot_depth_tex_sampler2D = glGetUniformLocation(program, "spot_depth_tex");
 	glUniform1i(spot_depth_tex_sampler2D, 1);
+
 
 	glUseProgram(0);
 
