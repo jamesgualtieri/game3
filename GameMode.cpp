@@ -64,7 +64,7 @@ Load< GLuint > blur_program(LoadTagDefault, [](){
 		"void main() {\n"
 		"	vec2 at = (gl_FragCoord.xy - 0.5 * textureSize(tex, 0)) / textureSize(tex, 0).y;\n"
 		//make blur amount more near the edges and less in the middle:
-		"	float amt = (0.01 * textureSize(tex,0).y) * max(0.0,(length(at) - 0.3)/0.2);\n"
+		"	float amt = (0.001 * textureSize(tex,0).y) * max(0.0,(length(at) - 0.3)/0.2);\n"
 		//pick a vector to move in for blur using function inspired by:
 		//https://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
 		"	vec2 ofs = amt * normalize(vec2(\n"
@@ -120,6 +120,11 @@ Load< GLuint > marble_tex(LoadTagDefault, [](){
 	return new GLuint(load_texture(data_path("textures/marble.png")));
 });
 
+Load< GLuint > torch_tex(LoadTagDefault, [](){
+	// some image I made with mac preview + some open source textures
+	return new GLuint(load_texture(data_path("textures/fire.png")));
+});
+
 Load< GLuint > white_tex(LoadTagDefault, [](){
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
@@ -140,6 +145,9 @@ Scene::Transform *camera_parent_transform = nullptr;
 Scene::Camera *camera = nullptr;
 Scene::Transform *spot_parent_transform = nullptr;
 Scene::Lamp *spot = nullptr;
+Scene::Transform *plate_parent_transform = nullptr;
+Scene::Transform *cream_parent_transform = nullptr;
+Scene::Transform *splot_parent_transform = nullptr;
 
 Load< Scene > scene(LoadTagDefault, [](){
 	Scene *ret = new Scene;
@@ -165,8 +173,10 @@ Load< Scene > scene(LoadTagDefault, [](){
 		obj->programs[Scene::Object::ProgramTypeDefault] = texture_program_info;
 		if (t->name == "Platform") {
 			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *wood_tex;
-		} else if (t->name == "Pedestal") {
+		} else if (t->name == "Pedestal" || t->name == "Plate") {
 			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *marble_tex;
+		} else if (t->name.rfind("Cylinder", 0) == 0){
+			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *torch_tex;
 		} else {
 			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *white_tex;
 		}
@@ -190,6 +200,18 @@ Load< Scene > scene(LoadTagDefault, [](){
 		if (t->name == "SpotParent") {
 			if (spot_parent_transform) throw std::runtime_error("Multiple 'SpotParent' transforms in scene.");
 			spot_parent_transform = t;
+		}
+		if (t->name == "PlateParent") {
+			if (plate_parent_transform) throw std::runtime_error("Multiple 'PlateParent' transforms in scene.");
+			plate_parent_transform = t;
+		}
+		if (t->name == "IceCream") {
+			if (cream_parent_transform) throw std::runtime_error("Multiple 'IceCream' transforms in scene.");
+			cream_parent_transform = t;
+		}
+		if (t->name == "Melt") {
+			if (splot_parent_transform) throw std::runtime_error("Multiple 'IceCream' transforms in scene.");
+			splot_parent_transform = t;
 		}
 
 	}
@@ -219,6 +241,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 });
 
 GameMode::GameMode() {
+	srand(time(NULL));
 }
 
 GameMode::~GameMode() {
@@ -242,12 +265,55 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 	}
 
+	if (evt.type == SDL_KEYDOWN && evt.key.repeat == 0){
+		if (evt.key.keysym.scancode == SDL_SCANCODE_A) {
+			plate_dir = 1.0f;
+			return true;
+		}
+		if (evt.key.keysym.scancode == SDL_SCANCODE_D) {
+			plate_dir = -1.0f;
+			return true;
+		}
+		if (evt.key.keysym.scancode == SDL_SCANCODE_S) {
+			life -= 1.0f;
+			return true;
+		}
+	}
+
 	return false;
 }
 
+float percentCovered() {
+	return 0.0f;
+}
+
 void GameMode::update(float elapsed) {
+	if (life >= 0.0f) {
+		life -= percentCovered() * elapsed;
+	}	
+
 	camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
+	count += elapsed;
+	if (count >= limit) {
+		dir = -1.0f * dir;
+		count = 0.0f;
+		limit = rand() % 10 * 1.0f;
+	}
+	spot_spin += elapsed * dir / 3.0f;
+	plate_spin += elapsed * plate_dir / 2.6f;
+	plate_parent_transform->rotation = glm::angleAxis(plate_spin, glm::vec3(0.0f, 0.0f, 1.0f));
+	
+
+	float cream_scale = life/10.0f;
+	cream_parent_transform->scale = glm::vec3(2.0f * cream_scale, 
+		2.0f * cream_scale, 2.0f * cream_scale);
+	splot_parent_transform->scale = glm::vec3(2.5f * (1.0f - cream_scale),
+		2.5f * (1.0f - cream_scale), 1.0f);
+
+	if (life >= 0.0f) {
+		score += elapsed;
+	}
 }
 
 //GameMode will render to some offscreen framebuffer(s).
@@ -375,10 +441,10 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	glUseProgram(texture_program->program);
 
 	//don't use distant directional light at all (color == 0):
-	glUniform3fv(texture_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, 0.0f)));
+	glUniform3fv(texture_program->sun_color_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 1.0f)));
 	glUniform3fv(texture_program->sun_direction_vec3, 1, glm::value_ptr(glm::normalize(glm::vec3(0.0f, 0.0f,-1.0f))));
 	//use hemisphere light for subtle ambient light:
-	glUniform3fv(texture_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.2f, 0.2f, 0.3f)));
+	glUniform3fv(texture_program->sky_color_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, 0.7f)));
 	glUniform3fv(texture_program->sky_direction_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)));
 
 	glm::mat4 world_to_spot =

@@ -30,4 +30,12 @@ struct GameMode : public Mode {
 
 	float camera_spin = 0.0f;
 	float spot_spin = 0.0f;
+	float plate_dir = 0.0f;
+	float plate_spin = 0.0f;
+
+	float count = 0.0f;
+	int dir = 1;
+	float limit = 1.0f;
+	float life = 10.0f;
+	float score = 0.0f;
 };
