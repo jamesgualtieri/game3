@@ -23,7 +23,9 @@ Game would have been really really easy if could move completely in 2-D space, s
 
 Good / Bad / Ugly Code:
 
-TODO: provide examples of code you wrote from this project that you think is good (elegant, simple, useful), bad (hack-y, brittle, unreadable), and ugly (particularly inelegant). Provide a sentence or two of justification for the examples.
+Bad code: I spent so long trying to do the good way of the shadow buffer read stuff and copped out for the angle-based implementation I made to test early on.
+
+But I think it looks nice?
 
 
 ## Asset Build Instructions

@@ -210,7 +210,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 			cream_parent_transform = t;
 		}
 		if (t->name == "Melt") {
-			if (splot_parent_transform) throw std::runtime_error("Multiple 'IceCream' transforms in scene.");
+			if (splot_parent_transform) throw std::runtime_error("Multiple 'Melt' transforms in scene.");
 			splot_parent_transform = t;
 		}
 
@@ -275,7 +275,7 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 		if (evt.key.keysym.scancode == SDL_SCANCODE_S) {
-			life -= 1.0f;
+			plate_dir = 0.0f;
 			return true;
 		}
 	}
@@ -288,10 +288,14 @@ float percentCovered() {
 }
 
 void GameMode::update(float elapsed) {
-	if (life >= 0.0f) {
-		life -= percentCovered() * elapsed;
-	}	
+	if (life <= 0.0f) {
+		return;
+	} else {
+		score += elapsed;
+	}
 
+
+	float speed_death = 1.0f;
 	camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 	count += elapsed;
@@ -311,8 +315,15 @@ void GameMode::update(float elapsed) {
 	splot_parent_transform->scale = glm::vec3(2.5f * (1.0f - cream_scale),
 		2.5f * (1.0f - cream_scale), 1.0f);
 
-	if (life >= 0.0f) {
-		score += elapsed;
+
+	float angle = plate_spin - spot_spin;
+	//ctrl-f BAD CODE
+	if (angle <= -0.5f || angle >= 0.4f) {
+		life -= elapsed * speed_death;
+	} else if (-0.5f < angle && angle < -0.28f) {
+		life -= ((-0.28f - angle)/0.22f) * elapsed * speed_death;
+	} else if (0.19f < angle && angle < 0.41f) {
+		life -= ((angle - 0.19f)/0.22f) * elapsed * speed_death;
 	}
 
 }
@@ -488,6 +499,34 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	glActiveTexture(GL_TEXTURE0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	std::string score_name = "SCORE";
+	float height = 0.1f;
+	draw_text(score_name, glm::vec2(-0.4f,0.84f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	std::string score_str = std::to_string((int)std::floor(score));
+	height = 0.1f;
+	draw_text(score_str , glm::vec2(0.4f,0.84f), height, glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	std::string not_dead = "FROZEN";
+	height = 0.05f;
+	draw_text(not_dead , glm::vec2(0.9f,0.6f), height, glm::vec4(0.9f, 0.9f, 1.0f, 1.0f));
+	draw_text(not_dead , glm::vec2(0.91f,0.61f), height, glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
+	std::string dead = "MELTED";
+	height = 0.05f;
+	draw_text(dead , glm::vec2(0.9f,-0.6f), height, glm::vec4(1.0f, 0.9f, 0.9f, 1.0f));
+	draw_text(dead , glm::vec2(0.91f,-0.61f), height, glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+	std::string you = "*";
+	height = 0.05f;
+	float y_pos = (life - 5.0f) / 10.0f;
+	draw_text(you, glm::vec2(1.0f,y_pos), height, glm::vec4(1.0f, 
+		(life/10.0f) + 0.2f, (life/10.0f) + 0.2f, 1.0f));
+	height = 0.1f;
+	draw_text(you, glm::vec2(0.975f, y_pos-0.025f), height, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
 
 	GL_ERRORS();
 
